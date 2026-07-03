@@ -1,36 +1,48 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Payment Reconciliation Dashboard
+
+A reconciliation tool for a company managing service contracts: bank transactions arrive daily from a bank API and need to be matched against existing contracts — who paid and who didn't.
+
+## Tech Stack
+
+- Next.js (App Router) + TypeScript
+- Supabase (Database)
+- Tailwind CSS
+- TanStack Query
+- Zod
 
 ## Getting Started
 
-First, run the development server:
+1. Clone the repo and install dependencies:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+   ```bash
+   git clone <repo-url>
+   cd geosafety
+   npm install
+   ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Create a `.env.local` file in the project root:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+   ```bash
+   NEXT_PUBLIC_SUPABASE_URL=<your Supabase project URL>
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=<your Supabase anon key>
+   ```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+3. Run the dev server:
 
-## Learn More
+   ```bash
+   npm run dev
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+   Open [http://localhost:3000](http://localhost:3000)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Database Setup
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Run the files from the `supabase/` folder in the Supabase SQL Editor, in this order:
 
-## Deploy on Vercel
+1. `seed_schema.sql` — tables, indexes, companies and contracts
+2. `seed_transactions.sql` — 89 bank transactions (all starting as `unmatched`)
+3. `policies.sql` — RLS policies
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Matching Logic — Where It Lives and Why
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+_(To be filled in once the RPC function is added)_
