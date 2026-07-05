@@ -11,6 +11,7 @@ import {
   type SortField,
 } from "@/components/TransactionsTable";
 import { StatusFilter } from "@/components/StatusFilter";
+import { MonthSelector } from "@/components/MonthSelector";
 import type { TransactionStatus } from "@/lib/types";
 
 const STATUSES = ["matched", "unmatched", "ignored"] as const;
@@ -101,7 +102,16 @@ export function Dashboard() {
 
   return (
     <main className="mx-auto max-w-6xl p-8">
-      <h1 className="mb-4 text-2xl font-semibold">Payment Reconciliation</h1>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
+        <h1 className="text-2xl font-semibold">Payment Reconciliation</h1>
+        {month && (
+          <MonthSelector
+            months={months}
+            value={month}
+            onChange={(value) => setParams({ month: value })}
+          />
+        )}
+      </div>
       <StatsBar transactions={monthTransactions} />
       <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
         <StatusFilter

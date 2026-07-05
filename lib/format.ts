@@ -13,3 +13,23 @@ export function formatDate(isoDate: string) {
   const [year, month, day] = isoDate.split("-");
   return `${day}.${month}.${year}`;
 }
+
+const MONTH_NAMES = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+export function formatMonth(isoMonth: string) {
+  const [year, month] = isoMonth.split("-");
+  return `${MONTH_NAMES[Number(month) - 1]} ${year}`;
+}
