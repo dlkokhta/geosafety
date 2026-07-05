@@ -29,6 +29,29 @@ export function Dashboard() {
     searchParams.get("sort") === "amount" ? "amount" : "date";
   const dir: SortDir = searchParams.get("dir") === "asc" ? "asc" : "desc";
 
+  const months = useMemo(() => {
+    const unique = new Set(
+      (transactions ?? []).map((t) => t.entry_date.slice(0, 7))
+    );
+    return [...unique].sort();
+  }, [transactions]);
+
+  // Expected vs actual (task 4) needs a concrete month, so there is no
+  // "all months" state — an unknown month falls back to the latest one.
+  const rawMonth = searchParams.get("month");
+  const month =
+    rawMonth && months.includes(rawMonth)
+      ? rawMonth
+      : (months[months.length - 1] ?? null);
+
+  const monthTransactions = useMemo(
+    () =>
+      month
+        ? (transactions ?? []).filter((t) => t.entry_date.startsWith(month))
+        : [],
+    [transactions, month]
+  );
+
   const setParams = useCallback(
     (updates: Record<string, string | null>) => {
       const params = new URLSearchParams(searchParams.toString());
@@ -56,8 +79,9 @@ export function Dashboard() {
   };
 
   const visibleTransactions = useMemo(() => {
-    const all = transactions ?? [];
-    const filtered = status ? all.filter((t) => t.status === status) : all;
+    const filtered = status
+      ? monthTransactions.filter((t) => t.status === status)
+      : monthTransactions;
     return [...filtered].sort((a, b) => {
       const cmp =
         sort === "amount"
@@ -65,7 +89,7 @@ export function Dashboard() {
           : a.entry_date.localeCompare(b.entry_date);
       return dir === "asc" ? cmp : -cmp;
     });
-  }, [transactions, status, sort, dir]);
+  }, [monthTransactions, status, sort, dir]);
 
   if (isPending) {
     return <p className="p-8 text-zinc-500">Loading…</p>;
@@ -78,7 +102,7 @@ export function Dashboard() {
   return (
     <main className="mx-auto max-w-6xl p-8">
       <h1 className="mb-4 text-2xl font-semibold">Payment Reconciliation</h1>
-      <StatsBar transactions={transactions} />
+      <StatsBar transactions={monthTransactions} />
       <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
         <StatusFilter
           value={status}
