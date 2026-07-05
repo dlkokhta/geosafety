@@ -2,15 +2,7 @@
 
 import { useMemo } from "react";
 import type { TransactionWithCompany } from "@/lib/types";
-
-const amountFormat = new Intl.NumberFormat("en", {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
-
-function formatGel(amount: number) {
-  return `${amountFormat.format(amount)} ₾`;
-}
+import { formatGel } from "@/lib/format";
 
 interface StatTileProps {
   label: string;

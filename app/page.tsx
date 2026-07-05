@@ -3,6 +3,7 @@
 import { useTransactions } from "@/lib/hooks/useTransactions";
 import { useRunMatching } from "@/lib/hooks/useRunMatching";
 import { StatsBar } from "@/components/StatsBar";
+import { TransactionsTable } from "@/components/TransactionsTable";
 
 export default function Home() {
   const { data: transactions, isPending, isError, error } = useTransactions();
@@ -18,7 +19,7 @@ export default function Home() {
   }
 
   return (
-    <main className="p-8">
+    <main className="mx-auto max-w-6xl p-8">
       <h1 className="mb-4 text-2xl font-semibold">
         Payment Reconciliation
       </h1>
@@ -42,14 +43,7 @@ export default function Home() {
           </span>
         )}
       </div>
-      <ul className="space-y-1 font-mono text-sm">
-        {transactions.map((t) => (
-          <li key={t.id}>
-            {t.entry_date} — {t.sender_name ?? "—"} — {t.amount} {t.currency} —{" "}
-            {t.status}
-          </li>
-        ))}
-      </ul>
+      <TransactionsTable transactions={transactions} />
     </main>
   );
 }
