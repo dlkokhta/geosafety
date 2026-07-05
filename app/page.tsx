@@ -2,6 +2,7 @@
 
 import { useTransactions } from "@/lib/hooks/useTransactions";
 import { useRunMatching } from "@/lib/hooks/useRunMatching";
+import { StatsBar } from "@/components/StatsBar";
 
 export default function Home() {
   const { data: transactions, isPending, isError, error } = useTransactions();
@@ -19,8 +20,9 @@ export default function Home() {
   return (
     <main className="p-8">
       <h1 className="mb-4 text-2xl font-semibold">
-        Transactions ({transactions.length})
+        Payment Reconciliation
       </h1>
+      <StatsBar transactions={transactions} />
       <div className="mb-6 flex items-center gap-4">
         <button
           onClick={() => runMatching.mutate()}
