@@ -2,6 +2,11 @@ export type TransactionStatus = "matched" | "unmatched" | "ignored";
 
 export type MatchMethod = "inn_exact" | "manual";
 
+export interface MatchedCompany {
+  id: string;
+  name: string;
+}
+
 export interface BankTransaction {
   id: string;
   doc_key: string;
@@ -18,4 +23,8 @@ export interface BankTransaction {
   status: TransactionStatus;
   created_at: string;
   updated_at: string;
+}
+
+export interface TransactionWithCompany extends BankTransaction {
+  matched_company: MatchedCompany | null;
 }
