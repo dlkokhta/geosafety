@@ -3,6 +3,9 @@
 import type { TransactionStatus, TransactionWithCompany } from "@/lib/types";
 import { formatDate, formatGel } from "@/lib/format";
 
+export type SortField = "date" | "amount";
+export type SortDir = "asc" | "desc";
+
 const badgeStyles: Record<TransactionStatus, string> = {
   matched: "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-400",
   unmatched: "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-400",
@@ -26,23 +29,83 @@ function StatusBadge({ status }: { status: TransactionStatus }) {
   );
 }
 
+function SortableHeader({
+  label,
+  field,
+  sort,
+  dir,
+  onSortChange,
+  align = "left",
+  className = "",
+}: {
+  label: string;
+  field: SortField;
+  sort: SortField;
+  dir: SortDir;
+  onSortChange: (field: SortField) => void;
+  align?: "left" | "right";
+  className?: string;
+}) {
+  const active = sort === field;
+  return (
+    <th
+      aria-sort={active ? (dir === "asc" ? "ascending" : "descending") : undefined}
+      className={`px-4 py-3 font-medium ${align === "right" ? "text-right" : ""} ${className}`}
+    >
+      <button
+        onClick={() => onSortChange(field)}
+        className="inline-flex items-center gap-1 hover:text-zinc-900 dark:hover:text-zinc-100"
+      >
+        {label}
+        {/* invisible (not conditional) so the header width doesn't jump */}
+        <span className={active ? "" : "invisible"}>
+          {active && dir === "asc" ? "↑" : "↓"}
+        </span>
+      </button>
+    </th>
+  );
+}
+
 export function TransactionsTable({
   transactions,
+  sort,
+  dir,
+  onSortChange,
 }: {
   transactions: TransactionWithCompany[];
+  sort: SortField;
+  dir: SortDir;
+  onSortChange: (field: SortField) => void;
 }) {
   return (
     <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800">
-      <table className="w-full text-sm">
+      {/* table-fixed: column widths come from the header row, not row
+          content, so they stay identical across filters */}
+      <table className="w-full table-fixed text-sm">
         <thead>
           <tr className="border-b border-zinc-200 text-left text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
-            <th className="px-4 py-3 font-medium">Date</th>
+            <SortableHeader
+              label="Date"
+              field="date"
+              sort={sort}
+              dir={dir}
+              onSortChange={onSortChange}
+              className="w-30"
+            />
             <th className="px-4 py-3 font-medium">Sender</th>
-            <th className="px-4 py-3 font-medium">Tax ID</th>
-            <th className="px-4 py-3 text-right font-medium">Amount</th>
-            <th className="px-4 py-3 font-medium">Status</th>
+            <th className="w-28 px-4 py-3 font-medium">Tax ID</th>
+            <SortableHeader
+              label="Amount"
+              field="amount"
+              sort={sort}
+              dir={dir}
+              onSortChange={onSortChange}
+              align="right"
+              className="w-32"
+            />
+            <th className="w-32 px-4 py-3 font-medium">Status</th>
             <th className="px-4 py-3 font-medium">Matched company</th>
-            <th className="px-4 py-3 font-medium">Actions</th>
+            <th className="w-20 px-4 py-3 font-medium">Actions</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/50">

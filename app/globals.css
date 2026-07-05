@@ -24,3 +24,9 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+html {
+  /* Reserve scrollbar space so layout width doesn't shift
+     when filtering changes whether the page scrolls */
+  scrollbar-gutter: stable;
+}
