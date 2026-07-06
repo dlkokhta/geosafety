@@ -6,6 +6,7 @@ import { useTransactions } from "@/lib/hooks/useTransactions";
 import { useContracts } from "@/lib/hooks/useContracts";
 import { useRunMatching } from "@/lib/hooks/useRunMatching";
 import { useSetTransactionStatus } from "@/lib/hooks/useSetTransactionStatus";
+import { useManualMatch } from "@/lib/hooks/useManualMatch";
 import { buildCompanySummary } from "@/lib/reconciliation";
 import { suggestCompany, type CompanySuggestion } from "@/lib/fuzzy";
 import type { Company } from "@/lib/types";
@@ -29,6 +30,7 @@ export function Dashboard() {
   const contractsQuery = useContracts();
   const runMatching = useRunMatching();
   const setStatus = useSetTransactionStatus();
+  const manualMatch = useManualMatch();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -219,6 +221,11 @@ export function Dashboard() {
           Error: {setStatus.error.message}
         </p>
       )}
+      {manualMatch.isError && (
+        <p className="mb-2 text-sm text-red-600">
+          Error: {manualMatch.error.message}
+        </p>
+      )}
       <TransactionsTable
         transactions={visibleTransactions}
         suggestions={suggestions}
@@ -226,7 +233,17 @@ export function Dashboard() {
         dir={dir}
         onSortChange={handleSortChange}
         onSetStatus={(id, status) => setStatus.mutate({ id, status })}
+        onAcceptSuggestion={(id, suggestion) =>
+          manualMatch.mutate({
+            id,
+            company: suggestion.company,
+            confidence: suggestion.score,
+          })
+        }
         pendingId={setStatus.isPending ? (setStatus.variables?.id ?? null) : null}
+        acceptingId={
+          manualMatch.isPending ? (manualMatch.variables?.id ?? null) : null
+        }
       />
     </main>
   );

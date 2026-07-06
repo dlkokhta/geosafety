@@ -74,7 +74,9 @@ export function TransactionsTable({
   dir,
   onSortChange,
   onSetStatus,
+  onAcceptSuggestion,
   pendingId,
+  acceptingId,
 }: {
   transactions: TransactionWithCompany[];
   suggestions: Map<string, CompanySuggestion>;
@@ -82,7 +84,9 @@ export function TransactionsTable({
   dir: SortDir;
   onSortChange: (field: SortField) => void;
   onSetStatus: (id: string, status: TransactionStatus) => void;
+  onAcceptSuggestion: (id: string, suggestion: CompanySuggestion) => void;
   pendingId: string | null;
+  acceptingId: string | null;
 }) {
   return (
     <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800">
@@ -126,7 +130,9 @@ export function TransactionsTable({
               </td>
             </tr>
           ) : (
-            transactions.map((t) => (
+            transactions.map((t) => {
+              const suggestion = suggestions.get(t.id);
+              return (
               <tr
                 key={t.id}
                 className="hover:bg-zinc-50 dark:hover:bg-zinc-900"
@@ -147,15 +153,22 @@ export function TransactionsTable({
                 <td className="px-4 py-3">
                   {t.matched_company ? (
                     t.matched_company.name
-                  ) : suggestions.has(t.id) ? (
-                    <span
-                      className="text-amber-700 dark:text-amber-500"
-                      title={`similarity ${Math.round(
-                        suggestions.get(t.id)!.score * 100
-                      )}%`}
-                    >
-                      Suggested: {suggestions.get(t.id)!.company.name}
-                    </span>
+                  ) : suggestion ? (
+                    <>
+                      <span
+                        className="text-amber-700 dark:text-amber-500"
+                        title={`similarity ${Math.round(suggestion.score * 100)}%`}
+                      >
+                        Suggested: {suggestion.company.name}
+                      </span>
+                      <button
+                        onClick={() => onAcceptSuggestion(t.id, suggestion)}
+                        disabled={acceptingId === t.id}
+                        className="ml-2 text-xs font-medium text-green-700 hover:text-green-900 disabled:opacity-50 dark:text-green-500 dark:hover:text-green-400"
+                      >
+                        Accept
+                      </button>
+                    </>
                   ) : (
                     "—"
                   )}
@@ -181,7 +194,8 @@ export function TransactionsTable({
                   )}
                 </td>
               </tr>
-            ))
+              );
+            })
           )}
         </tbody>
       </table>
