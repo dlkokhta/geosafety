@@ -51,6 +51,7 @@ Everything on the page is scoped to one month, picked with the prev/next month s
 - **Stats bar** — transaction counts and totals plus a match rate. The rate is `matched / (total − ignored)`: ignored transactions are deliberately excluded from reconciliation, so they don't count against it.
 - **Company summary (expected vs actual)** — *expected* is the sum of monthly amounts of the company's contracts active in the selected month; a contract counts as active if its date range overlaps the month at all, judged by `start_date`/`end_date` rather than the `status` column (status only reflects the current state, past months go by dates). *Actual* is the sum of the company's matched transactions in that month. Green = paid at least the expected amount, red = underpaid, gray = no payment at all. A payment from a company with no active contract still gets a row (expected 0), so unexpected money is visible too.
 - **Transactions table** — sortable by date or amount, filterable by status. The status filter only narrows the table; the stats and the summary always reflect the whole month.
+- **Ignore / Restore** — unmatched transactions can be marked as ignored (and back), so noise like bank fees doesn't drag the match rate down. The status change is optimistic: the cache is rewritten before the request, the UI flips instantly, and on failure it rolls back to a snapshot. Matched rows deliberately have no action — unmatching would just get undone by the next matching run.
 - **Run matching** — triggers the `match_transactions()` RPC and shows how many new matches it found.
 
 ### URL state
@@ -60,6 +61,8 @@ Filter, sort and month all live in the URL (`?status=…&sort=…&dir=…&month=
 ### Data loading
 
 All reads go through TanStack Query (`useTransactions`, `useContracts`). The "Run matching" mutation invalidates the `["transactions"]` cache on success, so the table, stats and summary all refresh automatically — contracts don't change during matching, so nothing else needs invalidating. Queries share a single loading/error state for the page; the mutation has its own inline pending/error/success feedback on the button.
+
+The hooks call typed service functions in [`lib/services/`](lib/services/), which own all Supabase access and error handling. Responses are typed via the interfaces in `lib/types.ts` but not runtime-validated with Zod: the database schema is owned by this repo (`supabase/seed_schema.sql`) and enforced by Postgres itself, so the shapes can't drift the way user input can. Zod is reserved for the one boundary where genuinely untrusted input enters the app — the URL search params.
 
 ## Matching Logic — Where It Lives and Why
 
