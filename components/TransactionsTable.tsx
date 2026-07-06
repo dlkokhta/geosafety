@@ -71,11 +71,15 @@ export function TransactionsTable({
   sort,
   dir,
   onSortChange,
+  onSetStatus,
+  pendingId,
 }: {
   transactions: TransactionWithCompany[];
   sort: SortField;
   dir: SortDir;
   onSortChange: (field: SortField) => void;
+  onSetStatus: (id: string, status: TransactionStatus) => void;
+  pendingId: string | null;
 }) {
   return (
     <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800">
@@ -105,7 +109,7 @@ export function TransactionsTable({
             />
             <th className="w-32 px-4 py-3 font-medium">Status</th>
             <th className="px-4 py-3 font-medium">Matched company</th>
-            <th className="w-20 px-4 py-3 font-medium">Actions</th>
+            <th className="w-24 px-4 py-3 font-medium">Actions</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/50">
@@ -138,7 +142,26 @@ export function TransactionsTable({
                   <StatusBadge status={t.status} />
                 </td>
                 <td className="px-4 py-3">{t.matched_company?.name ?? "—"}</td>
-                <td className="px-4 py-3 text-zinc-400 dark:text-zinc-600">—</td>
+                <td className="px-4 py-3">
+                  {t.status === "matched" ? (
+                    // Matched rows have no manual action: unmatching would
+                    // contradict the auto-matcher on the next run.
+                    <span className="text-zinc-400 dark:text-zinc-600">—</span>
+                  ) : (
+                    <button
+                      onClick={() =>
+                        onSetStatus(
+                          t.id,
+                          t.status === "ignored" ? "unmatched" : "ignored"
+                        )
+                      }
+                      disabled={pendingId === t.id}
+                      className="text-xs font-medium text-zinc-500 hover:text-zinc-900 disabled:opacity-50 dark:text-zinc-400 dark:hover:text-zinc-100"
+                    >
+                      {t.status === "ignored" ? "Restore" : "Ignore"}
+                    </button>
+                  )}
+                </td>
               </tr>
             ))
           )}

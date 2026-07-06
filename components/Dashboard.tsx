@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransactions } from "@/lib/hooks/useTransactions";
 import { useContracts } from "@/lib/hooks/useContracts";
 import { useRunMatching } from "@/lib/hooks/useRunMatching";
+import { useSetTransactionStatus } from "@/lib/hooks/useSetTransactionStatus";
 import { buildCompanySummary } from "@/lib/reconciliation";
 import { parseSearchParams } from "@/lib/searchParams";
 import { StatsBar } from "@/components/StatsBar";
@@ -20,6 +21,7 @@ export function Dashboard() {
   const { data: transactions, isPending, isError, error } = useTransactions();
   const contractsQuery = useContracts();
   const runMatching = useRunMatching();
+  const setStatus = useSetTransactionStatus();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -143,11 +145,18 @@ export function Dashboard() {
           </button>
         </div>
       </div>
+      {setStatus.isError && (
+        <p className="mb-2 text-sm text-red-600">
+          Error: {setStatus.error.message}
+        </p>
+      )}
       <TransactionsTable
         transactions={visibleTransactions}
         sort={sort}
         dir={dir}
         onSortChange={handleSortChange}
+        onSetStatus={(id, status) => setStatus.mutate({ id, status })}
+        pendingId={setStatus.isPending ? (setStatus.variables?.id ?? null) : null}
       />
     </main>
   );
