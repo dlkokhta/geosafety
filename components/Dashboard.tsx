@@ -162,7 +162,7 @@ export function Dashboard() {
         </div>
       </div>
       <StatsBar transactions={monthTransactions} />
-      <CompanySummary rows={companySummary} />
+      <CompanySummary rows={companySummary} isFiltered={q.trim() !== ""} />
       <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
         <StatusFilter
           value={status}

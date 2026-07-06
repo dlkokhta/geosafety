@@ -32,7 +32,13 @@ function formatDiff(diff: number) {
   return diff > 0 ? `+${formatGel(diff)}` : formatGel(diff);
 }
 
-export function CompanySummary({ rows }: { rows: CompanySummaryRow[] }) {
+export function CompanySummary({
+  rows,
+  isFiltered,
+}: {
+  rows: CompanySummaryRow[];
+  isFiltered: boolean;
+}) {
   return (
     <section className="mb-6">
       <h2 className="mb-3 text-lg font-semibold">Expected vs Actual</h2>
@@ -58,7 +64,9 @@ export function CompanySummary({ rows }: { rows: CompanySummaryRow[] }) {
                   colSpan={5}
                   className="px-4 py-8 text-center text-zinc-500 dark:text-zinc-400"
                 >
-                  No active contracts or payments this month
+                  {isFiltered
+                    ? "No companies match your search"
+                    : "No active contracts or payments this month"}
                 </td>
               </tr>
             ) : (
