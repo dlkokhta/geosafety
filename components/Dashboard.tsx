@@ -7,6 +7,10 @@ import { useContracts } from "@/lib/hooks/useContracts";
 import { useRunMatching } from "@/lib/hooks/useRunMatching";
 import { useSetTransactionStatus } from "@/lib/hooks/useSetTransactionStatus";
 import { buildCompanySummary } from "@/lib/reconciliation";
+import {
+  filterCompanySummary,
+  filterTransactionsByQuery,
+} from "@/lib/search";
 import { parseSearchParams } from "@/lib/searchParams";
 import { StatsBar } from "@/components/StatsBar";
 import { CompanySummary } from "@/components/CompanySummary";
@@ -16,6 +20,7 @@ import {
 } from "@/components/TransactionsTable";
 import { StatusFilter } from "@/components/StatusFilter";
 import { MonthSelector } from "@/components/MonthSelector";
+import { SearchInput } from "@/components/SearchInput";
 
 export function Dashboard() {
   const { data: transactions, isPending, isError, error } = useTransactions();
@@ -26,7 +31,8 @@ export function Dashboard() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const { status, sort, dir, month: rawMonth } = parseSearchParams(searchParams);
+  const { status, sort, dir, month: rawMonth, q } =
+    parseSearchParams(searchParams);
 
   const months = useMemo(() => {
     const unique = new Set(
@@ -79,15 +85,19 @@ export function Dashboard() {
   const companySummary = useMemo(
     () =>
       month && contractsQuery.data
-        ? buildCompanySummary(contractsQuery.data, monthTransactions, month)
+        ? filterCompanySummary(
+            buildCompanySummary(contractsQuery.data, monthTransactions, month),
+            q
+          )
         : [],
-    [contractsQuery.data, monthTransactions, month]
+    [contractsQuery.data, monthTransactions, month, q]
   );
 
   const visibleTransactions = useMemo(() => {
+    const searched = filterTransactionsByQuery(monthTransactions, q);
     const filtered = status
-      ? monthTransactions.filter((t) => t.status === status)
-      : monthTransactions;
+      ? searched.filter((t) => t.status === status)
+      : searched;
     return [...filtered].sort((a, b) => {
       const cmp =
         sort === "amount"
@@ -95,7 +105,7 @@ export function Dashboard() {
           : a.entry_date.localeCompare(b.entry_date);
       return dir === "asc" ? cmp : -cmp;
     });
-  }, [monthTransactions, status, sort, dir]);
+  }, [monthTransactions, q, status, sort, dir]);
 
   if (isPending || contractsQuery.isPending) {
     // Skeleton mirrors the real layout (header, stat tiles, table) so the
@@ -137,13 +147,19 @@ export function Dashboard() {
     <main className="mx-auto max-w-6xl p-8">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-2xl font-semibold">Payment Reconciliation</h1>
-        {month && (
-          <MonthSelector
-            months={months}
-            value={month}
-            onChange={(value) => setParams({ month: value })}
+        <div className="flex flex-wrap items-center gap-3">
+          <SearchInput
+            defaultValue={q}
+            onChange={(value) => setParams({ q: value.trim() ? value : null })}
           />
-        )}
+          {month && (
+            <MonthSelector
+              months={months}
+              value={month}
+              onChange={(value) => setParams({ month: value })}
+            />
+          )}
+        </div>
       </div>
       <StatsBar transactions={monthTransactions} />
       <CompanySummary rows={companySummary} />

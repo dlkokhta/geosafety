@@ -1,4 +1,5 @@
 import type { TransactionWithCompany } from "@/lib/types";
+import type { CompanySummaryRow } from "@/lib/reconciliation";
 
 // toLocaleLowerCase("ka") also maps Georgian Mtavruli capitals (ᲒᲔᲝᲢᲠᲐᲜᲡᲘ)
 // down to mkhedruli, so the search is case-insensitive in both scripts.
@@ -21,4 +22,17 @@ export function filterTransactionsByQuery(
       (value) => value != null && normalize(value).includes(q)
     )
   );
+}
+
+// Summary rows only carry the company name — companies have no tax id of
+// their own (ს/კ lives on the bank transaction), so an INN query simply
+// matches no summary rows.
+export function filterCompanySummary(
+  rows: CompanySummaryRow[],
+  query: string
+): CompanySummaryRow[] {
+  const q = normalize(query);
+  if (!q) return rows;
+
+  return rows.filter((row) => normalize(row.name).includes(q));
 }

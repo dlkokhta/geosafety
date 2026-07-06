@@ -9,6 +9,7 @@ const searchParamsSchema = z.object({
     .regex(/^\d{4}-\d{2}$/)
     .nullable()
     .catch(null),
+  q: z.string().catch(""),
 });
 
 export type ParsedSearchParams = z.infer<typeof searchParamsSchema>;
@@ -21,5 +22,6 @@ export function parseSearchParams(
     sort: searchParams.get("sort"),
     dir: searchParams.get("dir"),
     month: searchParams.get("month"),
+    q: searchParams.get("q"),
   });
 }
