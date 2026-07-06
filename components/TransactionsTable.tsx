@@ -187,7 +187,7 @@ export function TransactionsTable({
                         )
                       }
                       disabled={pendingId === t.id}
-                      className="text-xs font-medium text-zinc-500 hover:text-zinc-900 disabled:opacity-50 dark:text-zinc-400 dark:hover:text-zinc-100"
+                      className="rounded-md border border-zinc-200 px-2 py-1 text-xs font-medium text-zinc-600 hover:border-zinc-300 hover:bg-zinc-100 hover:text-zinc-900 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
                     >
                       {t.status === "ignored" ? "Restore" : "Ignore"}
                     </button>
