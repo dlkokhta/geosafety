@@ -44,6 +44,23 @@ Run the files from the `supabase/` folder in the Supabase SQL Editor, in this or
 3. `policies.sql` — RLS policies
 4. `functions.sql` — `match_transactions()` RPC (auto-matching logic)
 
+## Dashboard
+
+Everything on the page is scoped to one month, picked with the prev/next month selector. The default is the latest month that has data, and there is no "all months" view — the expected-vs-actual comparison only makes sense for a concrete month.
+
+- **Stats bar** — transaction counts and totals plus a match rate. The rate is `matched / (total − ignored)`: ignored transactions are deliberately excluded from reconciliation, so they don't count against it.
+- **Company summary (expected vs actual)** — *expected* is the sum of monthly amounts of the company's contracts active in the selected month; a contract counts as active if its date range overlaps the month at all, judged by `start_date`/`end_date` rather than the `status` column (status only reflects the current state, past months go by dates). *Actual* is the sum of the company's matched transactions in that month. Green = paid at least the expected amount, red = underpaid, gray = no payment at all. A payment from a company with no active contract still gets a row (expected 0), so unexpected money is visible too.
+- **Transactions table** — sortable by date or amount, filterable by status. The status filter only narrows the table; the stats and the summary always reflect the whole month.
+- **Run matching** — triggers the `match_transactions()` RPC and shows how many new matches it found.
+
+### URL state
+
+Filter, sort and month all live in the URL (`?status=…&sort=…&dir=…&month=…`), so any view is shareable and survives a refresh. The params are validated with a Zod schema ([`lib/searchParams.ts`](lib/searchParams.ts)) that uses `.catch()` fallbacks — a missing or garbage value silently falls back to its default instead of ever throwing.
+
+### Data loading
+
+All reads go through TanStack Query (`useTransactions`, `useContracts`). The "Run matching" mutation invalidates the `["transactions"]` cache on success, so the table, stats and summary all refresh automatically — contracts don't change during matching, so nothing else needs invalidating. Queries share a single loading/error state for the page; the mutation has its own inline pending/error/success feedback on the button.
+
 ## Matching Logic — Where It Lives and Why
 
 The auto-matching logic lives **in the database**, as a single SQL function: `match_transactions()` in [`supabase/functions.sql`](supabase/functions.sql). The UI triggers it with one RPC call (`supabase.rpc("match_transactions")`) from the `useRunMatching` hook, and invalidates the transactions query on success so the table refreshes automatically.
