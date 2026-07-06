@@ -1,6 +1,8 @@
 // Legal-form words appear before or after the actual name ("შპს გეოტრანსი",
 // "ბათუმი კარგო სს") and bank feeds often drop them entirely, so they carry
 // no matching signal — remove them outright.
+import type { Company } from "@/lib/types";
+
 const LEGAL_FORMS = new Set([
   "შპს",
   "სს",
@@ -52,4 +54,41 @@ export function nameSimilarity(a: string, b: string): number {
 
   if (totalA + totalB === 0) return 0;
   return (2 * shared) / (totalA + totalB);
+}
+
+export interface CompanySuggestion {
+  company: Company;
+  score: number;
+}
+
+// Below this the best candidate is more likely noise than a real match.
+const SUGGESTION_THRESHOLD = 0.6;
+// If the runner-up is this close, the match is ambiguous — suggest nothing
+// rather than guess between two plausible companies.
+const SUGGESTION_MARGIN = 0.15;
+
+export function suggestCompany(
+  senderName: string | null,
+  companies: Company[]
+): CompanySuggestion | null {
+  if (!senderName) return null;
+  const sender = normalizeCompanyName(senderName);
+  if (sender === "") return null;
+
+  let best: CompanySuggestion | null = null;
+  let secondScore = 0;
+
+  for (const company of companies) {
+    const score = nameSimilarity(sender, normalizeCompanyName(company.name));
+    if (!best || score > best.score) {
+      secondScore = best?.score ?? 0;
+      best = { company, score };
+    } else if (score > secondScore) {
+      secondScore = score;
+    }
+  }
+
+  if (!best || best.score < SUGGESTION_THRESHOLD) return null;
+  if (best.score - secondScore < SUGGESTION_MARGIN) return null;
+  return best;
 }

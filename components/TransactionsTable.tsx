@@ -1,6 +1,7 @@
 "use client";
 
 import type { TransactionStatus, TransactionWithCompany } from "@/lib/types";
+import type { CompanySuggestion } from "@/lib/fuzzy";
 import { formatDate, formatGel } from "@/lib/format";
 
 export type SortField = "date" | "amount";
@@ -68,6 +69,7 @@ function SortableHeader({
 
 export function TransactionsTable({
   transactions,
+  suggestions,
   sort,
   dir,
   onSortChange,
@@ -75,6 +77,7 @@ export function TransactionsTable({
   pendingId,
 }: {
   transactions: TransactionWithCompany[];
+  suggestions: Map<string, CompanySuggestion>;
   sort: SortField;
   dir: SortDir;
   onSortChange: (field: SortField) => void;
@@ -141,7 +144,22 @@ export function TransactionsTable({
                 <td className="px-4 py-3">
                   <StatusBadge status={t.status} />
                 </td>
-                <td className="px-4 py-3">{t.matched_company?.name ?? "—"}</td>
+                <td className="px-4 py-3">
+                  {t.matched_company ? (
+                    t.matched_company.name
+                  ) : suggestions.has(t.id) ? (
+                    <span
+                      className="text-amber-700 dark:text-amber-500"
+                      title={`similarity ${Math.round(
+                        suggestions.get(t.id)!.score * 100
+                      )}%`}
+                    >
+                      Suggested: {suggestions.get(t.id)!.company.name}
+                    </span>
+                  ) : (
+                    "—"
+                  )}
+                </td>
                 <td className="px-4 py-3">
                   {t.status === "matched" ? (
                     // Matched rows have no manual action: unmatching would

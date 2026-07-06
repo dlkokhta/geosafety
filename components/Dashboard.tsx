@@ -7,6 +7,8 @@ import { useContracts } from "@/lib/hooks/useContracts";
 import { useRunMatching } from "@/lib/hooks/useRunMatching";
 import { useSetTransactionStatus } from "@/lib/hooks/useSetTransactionStatus";
 import { buildCompanySummary } from "@/lib/reconciliation";
+import { suggestCompany, type CompanySuggestion } from "@/lib/fuzzy";
+import type { Company } from "@/lib/types";
 import {
   filterCompanySummary,
   filterTransactionsByQuery,
@@ -81,6 +83,26 @@ export function Dashboard() {
       setParams({ sort: field, dir: "desc" });
     }
   };
+
+  // Companies come from contracts (already fetched for the summary) — every
+  // company we could suggest necessarily has a contract.
+  const companies = useMemo(() => {
+    const byId = new Map<string, Company>();
+    for (const contract of contractsQuery.data ?? []) {
+      byId.set(contract.company.id, contract.company);
+    }
+    return [...byId.values()];
+  }, [contractsQuery.data]);
+
+  const suggestions = useMemo(() => {
+    const map = new Map<string, CompanySuggestion>();
+    for (const transaction of monthTransactions) {
+      if (transaction.status !== "unmatched") continue;
+      const suggestion = suggestCompany(transaction.sender_name, companies);
+      if (suggestion) map.set(transaction.id, suggestion);
+    }
+    return map;
+  }, [monthTransactions, companies]);
 
   const companySummary = useMemo(
     () =>
@@ -199,6 +221,7 @@ export function Dashboard() {
       )}
       <TransactionsTable
         transactions={visibleTransactions}
+        suggestions={suggestions}
         sort={sort}
         dir={dir}
         onSortChange={handleSortChange}
