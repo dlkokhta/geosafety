@@ -98,12 +98,39 @@ export function Dashboard() {
   }, [monthTransactions, status, sort, dir]);
 
   if (isPending || contractsQuery.isPending) {
-    return <p className="p-8 text-zinc-500">Loading…</p>;
+    // Skeleton mirrors the real layout (header, stat tiles, table) so the
+    // page doesn't jump when data arrives.
+    return (
+      <main className="mx-auto max-w-6xl p-8" aria-busy="true">
+        <div className="mb-4 h-8 w-72 animate-pulse rounded-md bg-zinc-100 dark:bg-zinc-900" />
+        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {[0, 1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="h-24 animate-pulse rounded-lg bg-zinc-100 dark:bg-zinc-900"
+            />
+          ))}
+        </div>
+        <div className="mb-6 h-48 animate-pulse rounded-lg bg-zinc-100 dark:bg-zinc-900" />
+        <div className="h-72 animate-pulse rounded-lg bg-zinc-100 dark:bg-zinc-900" />
+      </main>
+    );
   }
 
   if (isError || contractsQuery.isError) {
     const message = isError ? error.message : contractsQuery.error!.message;
-    return <p className="p-8 text-red-600">Error: {message}</p>;
+    return (
+      <main className="mx-auto max-w-6xl p-8">
+        <div className="rounded-lg border border-red-200 bg-red-50 p-6 dark:border-red-900 dark:bg-red-950">
+          <p className="font-medium text-red-700 dark:text-red-400">
+            Failed to load dashboard data
+          </p>
+          <p className="mt-1 text-sm text-red-600 dark:text-red-400/80">
+            {message}
+          </p>
+        </div>
+      </main>
+    );
   }
 
   return (
