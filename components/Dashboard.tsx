@@ -6,18 +6,15 @@ import { useTransactions } from "@/lib/hooks/useTransactions";
 import { useContracts } from "@/lib/hooks/useContracts";
 import { useRunMatching } from "@/lib/hooks/useRunMatching";
 import { buildCompanySummary } from "@/lib/reconciliation";
+import { parseSearchParams } from "@/lib/searchParams";
 import { StatsBar } from "@/components/StatsBar";
 import { CompanySummary } from "@/components/CompanySummary";
 import {
   TransactionsTable,
-  type SortDir,
   type SortField,
 } from "@/components/TransactionsTable";
 import { StatusFilter } from "@/components/StatusFilter";
 import { MonthSelector } from "@/components/MonthSelector";
-import type { TransactionStatus } from "@/lib/types";
-
-const STATUSES = ["matched", "unmatched", "ignored"] as const;
 
 export function Dashboard() {
   const { data: transactions, isPending, isError, error } = useTransactions();
@@ -27,12 +24,7 @@ export function Dashboard() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // Until task 5 adds Zod, unknown URL values silently fall back to defaults.
-  const rawStatus = searchParams.get("status") as TransactionStatus | null;
-  const status = rawStatus && STATUSES.includes(rawStatus) ? rawStatus : null;
-  const sort: SortField =
-    searchParams.get("sort") === "amount" ? "amount" : "date";
-  const dir: SortDir = searchParams.get("dir") === "asc" ? "asc" : "desc";
+  const { status, sort, dir, month: rawMonth } = parseSearchParams(searchParams);
 
   const months = useMemo(() => {
     const unique = new Set(
@@ -43,7 +35,6 @@ export function Dashboard() {
 
   // Expected vs actual (task 4) needs a concrete month, so there is no
   // "all months" state — an unknown month falls back to the latest one.
-  const rawMonth = searchParams.get("month");
   const month =
     rawMonth && months.includes(rawMonth)
       ? rawMonth
