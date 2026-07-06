@@ -26,7 +26,6 @@ export async function matchTransactionManually(
     .update({
       matched_company_id: companyId,
       match_method: "manual",
-      // match_confidence is NUMERIC(3,2) — round to the column's scale
       match_confidence: Math.round(confidence * 100) / 100,
       status: "matched",
     })
