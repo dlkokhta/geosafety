@@ -45,8 +45,6 @@ export function Dashboard() {
     return [...unique].sort();
   }, [transactions]);
 
-  // Expected vs actual (task 4) needs a concrete month, so there is no
-  // "all months" state — an unknown month falls back to the latest one.
   const month =
     rawMonth && months.includes(rawMonth)
       ? rawMonth
@@ -86,8 +84,6 @@ export function Dashboard() {
     }
   };
 
-  // Companies come from contracts (already fetched for the summary) — every
-  // company we could suggest necessarily has a contract.
   const companies = useMemo(() => {
     const byId = new Map<string, Company>();
     for (const contract of contractsQuery.data ?? []) {
@@ -132,8 +128,6 @@ export function Dashboard() {
   }, [monthTransactions, q, status, sort, dir]);
 
   if (isPending || contractsQuery.isPending) {
-    // Skeleton mirrors the real layout (header, stat tiles, table) so the
-    // page doesn't jump when data arrives.
     return (
       <main className="mx-auto max-w-6xl p-8" aria-busy="true">
         <div className="mb-4 h-8 w-72 animate-pulse rounded-md bg-zinc-100 dark:bg-zinc-900" />
