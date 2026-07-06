@@ -1,21 +1,15 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { matchTransactions } from "@/lib/services/transactions";
 
 export function useRunMatching() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    
-    mutationFn: async (): Promise<number> => {
-      const { data, error } = await supabase.rpc("match_transactions");
-      if (error) throw error;
-      return data;
-    },
+    mutationFn: matchTransactions,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
     },
   });
-
 }
