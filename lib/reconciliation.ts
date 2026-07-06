@@ -8,9 +8,15 @@ export interface CompanySummaryRow {
   diff: number;
 }
 
-// A contract counts for a month if it overlaps it at all, so a contract
-// ending mid-month is still expected to pay that month. The status column
-// only reflects the current state, so past months go by dates alone.
+export type PaymentState = "paid" | "underpaid" | "unpaid";
+
+
+export function paymentState(row: CompanySummaryRow): PaymentState {
+  if (row.actual === 0) return "unpaid";
+  return row.actual >= row.expected ? "paid" : "underpaid";
+}
+
+
 export function isActiveInMonth(
   contract: ContractWithCompany,
   month: string

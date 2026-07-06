@@ -1,14 +1,12 @@
 "use client";
 
-import type { CompanySummaryRow } from "@/lib/reconciliation";
+import {
+  paymentState,
+  type CompanySummaryRow,
+  type PaymentState,
+} from "@/lib/reconciliation";
+import { toCsv } from "@/lib/csv";
 import { formatGel } from "@/lib/format";
-
-type PaymentState = "paid" | "underpaid" | "unpaid";
-
-function paymentState(row: CompanySummaryRow): PaymentState {
-  if (row.actual === 0) return "unpaid";
-  return row.actual >= row.expected ? "paid" : "underpaid";
-}
 
 const badgeStyles: Record<PaymentState, string> = {
   paid: "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-400",
@@ -32,16 +30,51 @@ function formatDiff(diff: number) {
   return diff > 0 ? `+${formatGel(diff)}` : formatGel(diff);
 }
 
+// Raw numbers (no ₾, no thousands separators) so the file stays
+// computable in Excel; the CSV mirrors the rows currently on screen.
+function downloadCsv(rows: CompanySummaryRow[], month: string) {
+  const csv = toCsv([
+    ["Company", "Expected", "Actual", "Difference", "Status"],
+    ...rows.map((row) => [
+      row.name,
+      row.expected,
+      row.actual,
+      row.diff,
+      paymentState(row),
+    ]),
+  ]);
+  const url = URL.createObjectURL(
+    new Blob([csv], { type: "text/csv;charset=utf-8" })
+  );
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `reconciliation-${month}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 export function CompanySummary({
   rows,
+  month,
   isFiltered,
 }: {
   rows: CompanySummaryRow[];
+  month: string | null;
   isFiltered: boolean;
 }) {
   return (
     <section className="mb-6">
-      <h2 className="mb-3 text-lg font-semibold">Expected vs Actual</h2>
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-lg font-semibold">Expected vs Actual</h2>
+        {month && rows.length > 0 && (
+          <button
+            onClick={() => downloadCsv(rows, month)}
+            className="rounded-md border border-zinc-200 px-3 py-1.5 text-sm font-medium hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900"
+          >
+            Export CSV
+          </button>
+        )}
+      </div>
       <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800">
         <table className="w-full table-fixed text-sm">
           <thead>
