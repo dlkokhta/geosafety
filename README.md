@@ -54,6 +54,22 @@ Everything on the page is scoped to one month, picked with the prev/next month s
 - **Ignore / Restore** — unmatched transactions can be marked as ignored (and back), so noise like bank fees doesn't drag the match rate down. The status change is optimistic: the cache is rewritten before the request, the UI flips instantly, and on failure it rolls back to a snapshot. Matched rows deliberately have no action — unmatching would just get undone by the next matching run.
 - **Run matching** — triggers the `match_transactions()` RPC and shows how many new matches it found.
 
+### Bonus features
+
+- **Search** — filters the transactions table by bank sender name, matched company name or tax ID, and the company summary by name. Matching is case-insensitive in both Georgian scripts (Mtavruli input finds mkhedruli names).
+- **CSV export** — the company summary downloads as `reconciliation-<month>.csv`. Values are raw numbers (so Excel can compute with them) and the file starts with a UTF-8 BOM so Georgian names render correctly in Excel. The export reflects the current search filter.
+- **Matching via Supabase RPC** — matching has lived in the database from day one rather than being retrofitted; the reasoning is covered in [Matching Logic](#matching-logic--where-it-lives-and-why) below.
+- **Fuzzy name suggestions** — an unmatched transaction whose sender name resembles a known company gets an amber *Suggested: …* label with an **Accept** button (e.g. "გეოტრანსი (ფილიალი)" suggests "შპს გეოტრანსი"). Names are first normalized in [`lib/fuzzy.ts`](lib/fuzzy.ts) (legal forms like შპს/სს stripped wherever they appear, parenthetical qualifiers such as "(ფილიალი)" removed, Georgian-aware lowercasing), then compared with a bigram Dice similarity. A suggestion only appears above a 0.6 score **and** with a clear margin over the runner-up — an ambiguous match shows nothing rather than guessing. Accepting writes the match with `match_method = 'manual'` and the similarity score as `match_confidence`.
+
+  *Where to see it:* on a freshly seeded database every transaction starts `unmatched`, so suggestions are visible immediately, before the first matching run. After **Run matching**, tax-ID matching wins wherever both signals exist (every variant-named transaction in the seed also carries a correct tax ID), and the remaining unmatched rows are companies not in the system — where showing no suggestion is the correct behavior, not a gap. To revisit a suggestion afterwards, temporarily unmatch one row and let the next matching run restore it:
+
+  ```sql
+  UPDATE bank_transactions
+  SET status = 'unmatched', matched_company_id = NULL,
+      match_method = NULL, match_confidence = NULL
+  WHERE doc_key = 'BOG-2026-06-002';
+  ```
+
 ### URL state
 
 Filter, sort and month all live in the URL (`?status=…&sort=…&dir=…&month=…`), so any view is shareable and survives a refresh. The params are validated with a Zod schema ([`lib/searchParams.ts`](lib/searchParams.ts)) that uses `.catch()` fallbacks — a missing or garbage value silently falls back to its default instead of ever throwing.
