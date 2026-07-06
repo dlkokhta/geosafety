@@ -3,8 +3,11 @@
 import { useCallback, useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransactions } from "@/lib/hooks/useTransactions";
+import { useContracts } from "@/lib/hooks/useContracts";
 import { useRunMatching } from "@/lib/hooks/useRunMatching";
+import { buildCompanySummary } from "@/lib/reconciliation";
 import { StatsBar } from "@/components/StatsBar";
+import { CompanySummary } from "@/components/CompanySummary";
 import {
   TransactionsTable,
   type SortDir,
@@ -18,6 +21,7 @@ const STATUSES = ["matched", "unmatched", "ignored"] as const;
 
 export function Dashboard() {
   const { data: transactions, isPending, isError, error } = useTransactions();
+  const contractsQuery = useContracts();
   const runMatching = useRunMatching();
   const router = useRouter();
   const pathname = usePathname();
@@ -79,6 +83,14 @@ export function Dashboard() {
     }
   };
 
+  const companySummary = useMemo(
+    () =>
+      month && contractsQuery.data
+        ? buildCompanySummary(contractsQuery.data, monthTransactions, month)
+        : [],
+    [contractsQuery.data, monthTransactions, month]
+  );
+
   const visibleTransactions = useMemo(() => {
     const filtered = status
       ? monthTransactions.filter((t) => t.status === status)
@@ -92,12 +104,13 @@ export function Dashboard() {
     });
   }, [monthTransactions, status, sort, dir]);
 
-  if (isPending) {
+  if (isPending || contractsQuery.isPending) {
     return <p className="p-8 text-zinc-500">Loading…</p>;
   }
 
-  if (isError) {
-    return <p className="p-8 text-red-600">Error: {error.message}</p>;
+  if (isError || contractsQuery.isError) {
+    const message = isError ? error.message : contractsQuery.error!.message;
+    return <p className="p-8 text-red-600">Error: {message}</p>;
   }
 
   return (
@@ -113,6 +126,7 @@ export function Dashboard() {
         )}
       </div>
       <StatsBar transactions={monthTransactions} />
+      <CompanySummary rows={companySummary} />
       <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
         <StatusFilter
           value={status}
