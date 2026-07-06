@@ -1,5 +1,7 @@
 # Payment Reconciliation Dashboard
 
+**Live demo:** [https://geosafety-one.vercel.app](https://geosafety-one.vercel.app)
+
 A reconciliation tool for a company managing service contracts: bank transactions arrive daily from a bank API and need to be matched against existing contracts — who paid and who didn't.
 
 ## Tech Stack
@@ -93,6 +95,6 @@ A transaction is matched to a company **only by tax ID**: `bank_transactions.sen
 The assignment allowed either approach (fetch all + match + update on the client, or a database function). I chose the RPC because:
 
 - **One atomic statement instead of N round trips.** The whole job is a single set-based `UPDATE ... FROM companies`. Client-side matching would need to download all transactions and companies, compare them in JS, and then send an update per matched row — slower, and a partial failure could leave the data half-updated.
-- **It plays well with RLS.** The tables are protected by row-level security that only allows reads for anonymous users. The function is `security definer`, so this one well-defined operation may write, while the anon key still cannot modify tables directly.
+- **It plays well with RLS.** `companies` and `contracts` are read-only for the anon key; only `bank_transactions` allows updates (for the ignore/restore and manual-match actions). The function is `security definer`, so the bulk matching runs as one privileged, well-defined operation instead of relying on the client's write access.
 - **Safe to re-run.** It only touches rows with `status = 'unmatched'`, so running it again never overwrites manual matches or ignored transactions. It returns the number of newly matched rows, which the UI shows after each run.
 - **The logic sits next to the data.** The matching rule is a data-integrity rule; keeping it in SQL means any client (the dashboard, a cron job, a one-off script) runs exactly the same logic.
