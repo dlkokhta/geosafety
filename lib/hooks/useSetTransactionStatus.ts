@@ -2,15 +2,14 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import type { TransactionStatus } from "@/lib/types";
+import type { TransactionStatus, TransactionWithCompany } from "@/lib/types";
 
 interface SetStatusInput {
   id: string;
   status: TransactionStatus;
 }
 
-// Serves both actions: Ignore (status -> 'ignored') and Restore
-// (status -> 'unmatched'). updated_at is handled by the DB trigger.
+
 export function useSetTransactionStatus() {
   const queryClient = useQueryClient();
 
@@ -22,7 +21,31 @@ export function useSetTransactionStatus() {
         .eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onMutate: async ({ id, status }) => {
+      
+      await queryClient.cancelQueries({ queryKey: ["transactions"] });
+
+      const previous = queryClient.getQueryData<TransactionWithCompany[]>([
+        "transactions",
+      ]);
+
+      queryClient.setQueryData<TransactionWithCompany[]>(
+        ["transactions"],
+        (old) => old?.map((t) => (t.id === id ? { ...t, status } : t))
+      );
+
+      
+      return { previous };
+    },
+   
+    onError: (_error, _input, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(["transactions"], context.previous);
+      }
+    },
+    // Success or failure, refetch in the end so the cache reflects the
+    // server's truth rather than our guess.
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
     },
   });
