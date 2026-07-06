@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useTransactions } from "@/lib/hooks/useTransactions";
 import { useContracts } from "@/lib/hooks/useContracts";
 import { useRunMatching } from "@/lib/hooks/useRunMatching";
@@ -31,7 +31,6 @@ export function Dashboard() {
   const runMatching = useRunMatching();
   const setStatus = useSetTransactionStatus();
   const manualMatch = useManualMatch();
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -69,11 +68,13 @@ export function Dashboard() {
         }
       }
       const query = params.toString();
-      router.replace(query ? `${pathname}?${query}` : pathname, {
-        scroll: false,
-      });
+      // replaceState instead of router.replace: filters are pure client
+      // state, and a router navigation refetches the RSC payload — while
+      // it's in flight the page collapses to the Suspense fallback and
+      // the browser clamps the scroll position to the top.
+      window.history.replaceState(null, "", query ? `${pathname}?${query}` : pathname);
     },
-    [searchParams, router, pathname]
+    [searchParams, pathname]
   );
 
   const handleSortChange = (field: SortField) => {
